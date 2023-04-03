@@ -1,0 +1,15 @@
+<RCC>
+    <qresource prefix="/"/>
+    <qresource prefix="/icons">
+        <file>resources/accessories-calculator.png</file>
+        <file>resources/document-open.png</file>
+        <file>resources/document-save.png</file>
+        <file>resources/edit-clear.png</file>
+        <file>resources/edit-find-replace.png</file>
+        <file>resources/edit-undo.png</file>
+        <file>resources/utilities-system-monitor.png</file>
+        <file>resources/pause.png</file>
+        <file>resources/start.png</file>
+        <file>resources/stop.png</file>
+    </qresource>
+</RCC>
