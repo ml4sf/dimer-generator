@@ -49,12 +49,6 @@ void add_reaction(QTableWidget *table, const std::string &smarts){
     add_item(table, react, smarts);
 }
 
-void save_all(QTableWidget *table, int row, int column){
-
-}
-
-
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -99,8 +93,6 @@ void MainWindow::on_actionOpen_triggered()
             return;
         }
     }
-    //readFileToTable(ui->separatorBox->currentIndex());
-//    readFilesFrom(path);
 }
 
 void MainWindow::on_actionSave_triggered()
@@ -112,41 +104,29 @@ void MainWindow::on_actionSave_triggered()
     }
 
     QFile file(path);
+    file.open(QFile::WriteOnly);
 
-    auto mols = ui->output_table->children();
-    std::string text = "";
-    for(auto m: mols){
-        auto h = ((ChemicalItem*)m)->text();
-        text += h;
-        text += " ";
+    int numberOfMolecules = ui->output_table->rowCount();
+    for(int i = 0; i < numberOfMolecules; i ++){
+        ChemicalItem* item = (ChemicalItem*)ui->output_table->cellWidget(i, 0);
+        Molecule* mol = (Molecule*)item->widget();
+        mol->display_mol()->setProp("_Name", item->text());
+        file.write(RDKit::MolToMolBlock(*mol->display_mol()).data());
     }
-    messageBox->setText(QString::fromStdString(text));
-    messageBox->show();
-//    Molecule* mol = (Molecule*)ui->output_table->cellWidget(0, 0);
-//    if(!mol){
-//        messageBox->setText(QString::fromStdString("There is no molecule"));
-//        messageBox->show();
-//        return;
-//    }
-//    if(!mol->display_mol()){
-//        messageBox->setText(QString::fromStdString("There is no molecule in the molecule"));
-//        messageBox->show();
-//        return;
-//    }
-//    RDKit::MolToMolFile(*(mol->display_mol()), file.fileName().toStdString());
 
+    file.close();
 }
 
 void MainWindow::on_actionRun_triggered()
 {
-//    QLayoutItem* item;
-//    while( (item = ui->output_table->layout()->takeAt(0)) != nullptr){
-//        delete item->widget();
-//        delete item;
-//    }
+    ui->output_table->setRowCount(0);
 
     int numberOfReactions = ui->react_table->rowCount();
     int numberOfMolecules = ui->input_table->rowCount();
+    if(!numberOfMolecules || !numberOfReactions){
+        return;
+    }
+
     int counter = 0;
     for(int i = 0; i < numberOfReactions; i ++){
         ui->progressBar->setValue((i+1) * 100.f / numberOfReactions);
@@ -155,10 +135,6 @@ void MainWindow::on_actionRun_triggered()
         for(int j = 0; j < numberOfMolecules; j ++){
             ChemicalItem *m = (ChemicalItem*)ui->input_table->cellWidget(j, 0);
             RDKit::ROMOL_SPTR curr_mol = ((Molecule*)m->widget())->display_mol();
-            // Ne pitai, ne znam
-//            boost::shared_ptr<RDKit::ROMol> mol1(new RDKit::ROMol(*((Molecule*)m->widget())->display_mol()));
-//            boost::shared_ptr<RDKit::ROMol> mol2(new RDKit::ROMol(*((Molecule*)m->widget())->display_mol()));
-//            std::vector<boost::shared_ptr<RDKit::ROMol>> vec{mol1, mol2};
 
             auto res = react->run(curr_mol, ui->output_table, this->windowFlags());
             for(Molecule* new_mol: res){
