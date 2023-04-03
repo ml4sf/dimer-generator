@@ -127,7 +127,6 @@ void MainWindow::on_actionRun_triggered()
         return;
     }
 
-    int counter = 0;
     for(int i = 0; i < numberOfReactions; i ++){
         ui->progressBar->setValue((i+1) * 100.f / numberOfReactions);
         ChemicalItem *item = (ChemicalItem*)ui->react_table->cellWidget(i, 0);
