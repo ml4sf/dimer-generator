@@ -8,8 +8,6 @@
 #include <GraphMol/GraphMol.h>
 #include <GraphMol/MolDraw2D/Qt/MolDraw2DQt.h>
 
-#include <memory>
-
 class ChemicalReactionWidget : public QWidget
 {
     Q_OBJECT

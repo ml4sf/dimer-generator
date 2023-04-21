@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "molecule.h"
 #include "reaction.h"
+#include "reactiongenerator.h"
 #include "chemicalitem.h"
 
 #include "./ui_mainwindow.h"
@@ -8,6 +9,7 @@
 #include <QTextStream>
 #include <QDebug>
 #include <QDir>
+#include <QDirIterator>
 #include <QHBoxLayout>
 
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -54,12 +56,15 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
     , fileDialog(nullptr)
     , messageBox(nullptr)
+    , reactionDialog(nullptr)
+
 {
     ui->setupUi(this);
-
+    saveFileName = "";
     fileDialog = new QFileDialog(this);
-    fileDialog->setNameFilter("MOL file (*.mol; *.mdl)");
     messageBox = new QMessageBox(this);
+    reactionDialog = new ReactionDialog(this);
+    connect(reactionDialog, SIGNAL(accepted()), this, SLOT(reactionDialogAccepted()));
 }
 
 MainWindow::~MainWindow()
@@ -75,46 +80,61 @@ void MainWindow::on_actionExit_triggered()
 
 void MainWindow::on_actionOpen_triggered()
 {
-    QString path = fileDialog->getOpenFileName(this, "Select a molecule", "Mol files (*.mdl *.mol)");
+    QString path = fileDialog->getExistingDirectory(this, "Select folder", "");
     if (path.isEmpty()) return;
 
-    QString title;
-    QTextStream(&title) << windowTitle() << "(" << path << ")";
-    setWindowTitle(title);
-
-    if (path.endsWith(".mol") || path.endsWith(".mdl")){
+    QStringList filters;
+    filters << "*.mol" << "*.mdl";
+    QDirIterator it(path, filters, QDir::Files);
+    QString badFiles = "";
+    while (it.hasNext()){
+        QString filePath = it.next();
         try{
-            add_molecule(ui->input_table, path.toStdString());
+            add_molecule(ui->input_table, filePath.toStdString());
         }
-        catch(std::exception){
-            messageBox->setText("Cannot read file correctly");
-            messageBox->setWindowTitle("Invalid file");
-            messageBox->exec();
-            return;
+        catch(RDKit::BadFileException()){
+            badFiles += filePath + "\n";
         }
+    }
+    if(!badFiles.isEmpty()){
+        messageBox->setText("Cannot read file correctly\n" + badFiles);
+        messageBox->setWindowTitle("Invalid file");
+        messageBox->exec();
     }
 }
 
 void MainWindow::on_actionSave_triggered()
 {
 
-    QString path = fileDialog->getSaveFileName(this, "Save");
+    QString path = fileDialog->getExistingDirectory(this, "Select save directory", "");
     if(path.isEmpty()){
         return;
     }
+    reactionDialog->show();
 
-    QFile file(path);
-    file.open(QFile::WriteOnly);
+    QEventLoop loop;
+    connect(this, &MainWindow::name_accepted, &loop, &QEventLoop::quit);
+    loop.exec(); //exec will delay execution until the signal has arrived
+    if(saveFileName.isEmpty()){
+        return;
+    }
+    qDebug() << saveFileName;
 
     int numberOfMolecules = ui->output_table->rowCount();
     for(int i = 0; i < numberOfMolecules; i ++){
+        QFile file(path + "/" + saveFileName + "_" + QString::fromStdString(std::to_string(i)) + ".mol");
+        file.open(QFile::WriteOnly);
+
         ChemicalItem* item = (ChemicalItem*)ui->output_table->cellWidget(i, 0);
         Molecule* mol = (Molecule*)item->widget();
         mol->display_mol()->setProp("_Name", item->text());
         file.write(RDKit::MolToMolBlock(*mol->display_mol()).data());
-    }
 
-    file.close();
+        file.close();
+    }
+    messageBox->setWindowTitle("Saving");
+    messageBox->setText("Saving done");
+    messageBox->show();
 }
 
 void MainWindow::on_actionRun_triggered()
@@ -146,7 +166,44 @@ void MainWindow::on_actionRun_triggered()
 
 void MainWindow::on_actionAdd_Reaction_triggered()
 {
-    add_reaction(ui->react_table, "([RH1:1]).([RH1:2])>>[RH1:1]/C=C/[RH1:2]");
+    std::vector<RDKit::ROMOL_SPTR> mols;
+
+    //add_reaction(ui->react_table, "([RH1:1]).([RH1:2])>>[RH1:1]/C=C/[RH1:2]");
+    QString path = fileDialog->getExistingDirectory(this, "Select folder", "");
+    if (path.isEmpty()) return;
+
+    QStringList filters;
+    filters << "*.mol" << "*.mdl";
+    QDirIterator it(path, filters, QDir::Files);
+    QString badFiles;
+    while (it.hasNext()){
+        QString filePath = it.next();
+        try{
+            mols.push_back(RDKit::ROMOL_SPTR(RDKit::MolFileToMol(filePath.toStdString())));
+        }
+        catch(RDKit::BadFileException()){
+            badFiles += filePath + "\n";
+        }
+    }
+    if(!badFiles.isEmpty()){
+        messageBox->setText("Cannot read file correctly\n" + badFiles);
+        messageBox->setWindowTitle("Invalid file");
+        messageBox->exec();
+    }
+
+    reactionGenerator gen;
+    auto res = gen.generate_reactions(mols, this);
+
+    for(auto &p: res){
+        add_item(ui->react_table, p.second, p.second->smarts());
+    }
+
     return;
+}
+
+void MainWindow::reactionDialogAccepted()
+{
+    saveFileName = reactionDialog->getReaction();
+    emit name_accepted();
 }
 

@@ -1,5 +1,8 @@
 <RCC>
-    <qresource prefix="/"/>
+    <qresource prefix="/">
+        <file>resources/molecule.png</file>
+        <file>resources/reaction.png</file>
+    </qresource>
     <qresource prefix="/icons">
         <file>resources/accessories-calculator.png</file>
         <file>resources/document-open.png</file>

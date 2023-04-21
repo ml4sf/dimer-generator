@@ -7,76 +7,76 @@
 #include <GraphMol/new_canon.h>
 
 #define RXN_SPTR boost::shared_ptr<RDKit::ChemicalReaction>
+namespace  {
+    RDKit::UINT_VECT unique_atoms(RDKit::ROMOL_SPTR mol){
+        RDKit::UINT_VECT rank;
+        RDKit::Canon::rankMolAtoms(*mol, rank, false);
 
-RDKit::UINT_VECT unique_atoms(RDKit::ROMOL_SPTR mol){
-    RDKit::UINT_VECT rank;
-    RDKit::Canon::rankMolAtoms(*mol, rank, false);
-
-    std::unordered_map<RDKit::UINT, int> uniqueIds;
-    for(int i = 0; i < rank.size(); i ++){
-        uniqueIds.insert(std::make_pair(rank[i], i));
-        // std::cout << i  << " " << mol->getAtomWithIdx(i)->getAtomicNum() << " " << result[i] << "\n";
-    }
-
-    RDKit::UINT_VECT result;
-    for(auto &kv: uniqueIds){
-        result.push_back(kv.second);
-    }
-
-    return result;
-}
-
-RDKit::MOL_SPTR_VECT generate_all_products(RXN_SPTR rxn, RDKit::ROMOL_SPTR mol){
-    RDKit::ROMOL_SPTR mol1(new RDKit::ROMol(*RDKit::MolOps::removeAllHs(*mol)));
-    RDKit::ROMOL_SPTR mol2(new RDKit::ROMol(*RDKit::MolOps::removeAllHs(*mol)));
-    RDKit::MOL_SPTR_VECT rVect = {mol1, mol2};
-    // std::cout << "I am here\n";
-    std::vector<RDKit::MOL_SPTR_VECT> products = rxn->runReactants(rVect);
-    // std::cout << "Finished reaction\n";
-    std::vector<std::string> smiles;
-    for(auto p: products){
-        smiles.push_back(RDKit::MolToSmiles(*p[0]));
-    }
-
-    RDKit::MOL_SPTR_VECT res;
-    for(auto s: smiles){
-        res.push_back(RDKit::ROMOL_SPTR(RDKit::SmilesToMol(s)));
-    }
-    return res;
-}
-
-std::unordered_map<std::string, RDKit::ROMOL_SPTR> run_reaction(RXN_SPTR rxn, RDKit::ROMOL_SPTR mol, const int expected_molecules = 128){
-    auto uniqueIds = unique_atoms(mol);
-    std::unordered_map<std::string, RDKit::ROMOL_SPTR> product; // The final reaction products
-    product.reserve(expected_molecules);
-
-
-    // for(auto &id: uniqueIds){ std::cout << id << " ";} std::cout << std::endl;
-    for(auto uId: uniqueIds){
-        // Protect all atoms
-        for(auto atom: mol->atoms()){
-            atom->setProp("_protected", "1");
+        std::unordered_map<RDKit::UINT, int> uniqueIds;
+        for(unsigned int i = 0; i < rank.size(); i ++){
+            uniqueIds.insert(std::make_pair(rank[i], i));
+            // std::cout << i  << " " << mol->getAtomWithIdx(i)->getAtomicNum() << " " << result[i] << "\n";
         }
-        mol->getAtomWithIdx(uId)->clearProp("_protected");
-        // std::cout << uId << " index\n";
-        // for(auto atom: mol->atoms()){
-        //     std::cout << atom->getIdx() << " " << ((atom->hasProp("_protected"))? "":"not ") << "protected\n";
-        // }
-        // std::cout << "****\n";
 
-        for(auto &new_mol: generate_all_products(rxn, mol)){
+        RDKit::UINT_VECT result;
+        for(auto &kv: uniqueIds){
+            result.push_back(kv.second);
+        }
 
-         auto flag = product.insert(std::make_pair(RDKit::MolToSmiles(*new_mol), new_mol)); // Removes the duplicates if there are any
-            // if(!flag.second){
-            //     std::cout << "Failed to insert " << RDKit::MolToSmiles(*new_mol)  << " on id " << uId << "\n";
+        return result;
+    }
+
+    RDKit::MOL_SPTR_VECT generate_all_products(RXN_SPTR rxn, RDKit::ROMOL_SPTR mol){
+        RDKit::ROMOL_SPTR mol1(new RDKit::ROMol(*RDKit::MolOps::removeAllHs(*mol)));
+        RDKit::ROMOL_SPTR mol2(new RDKit::ROMol(*RDKit::MolOps::removeAllHs(*mol)));
+        RDKit::MOL_SPTR_VECT rVect = {mol1, mol2};
+        // std::cout << "I am here\n";
+        std::vector<RDKit::MOL_SPTR_VECT> products = rxn->runReactants(rVect);
+        // std::cout << "Finished reaction\n";
+        std::vector<std::string> smiles;
+        for(auto p: products){
+            smiles.push_back(RDKit::MolToSmiles(*p[0]));
+        }
+
+        RDKit::MOL_SPTR_VECT res;
+        for(auto s: smiles){
+            res.push_back(RDKit::ROMOL_SPTR(RDKit::SmilesToMol(s)));
+        }
+        return res;
+    }
+
+    std::unordered_map<std::string, RDKit::ROMOL_SPTR> run_reaction(RXN_SPTR rxn, RDKit::ROMOL_SPTR mol, const int expected_molecules = 128){
+        auto uniqueIds = unique_atoms(mol);
+        std::unordered_map<std::string, RDKit::ROMOL_SPTR> product; // The final reaction products
+        product.reserve(expected_molecules);
+
+
+        // for(auto &id: uniqueIds){ std::cout << id << " ";} std::cout << std::endl;
+        for(auto uId: uniqueIds){
+            // Protect all atoms
+            for(auto atom: mol->atoms()){
+                atom->setProp("_protected", "1");
+            }
+            mol->getAtomWithIdx(uId)->clearProp("_protected");
+            // std::cout << uId << " index\n";
+            // for(auto atom: mol->atoms()){
+            //     std::cout << atom->getIdx() << " " << ((atom->hasProp("_protected"))? "":"not ") << "protected\n";
             // }
+            // std::cout << "****\n";
+
+            for(auto &new_mol: generate_all_products(rxn, mol)){
+
+                product.insert(std::make_pair(RDKit::MolToSmiles(*new_mol), new_mol)); // Removes the duplicates if there are any
+                // if(!flag.second){
+                //     std::cout << "Failed to insert " << RDKit::MolToSmiles(*new_mol)  << " on id " << uId << "\n";
+                // }
+            }
+
         }
 
+        return product;
     }
-
-    return product;
 }
-
 ChemicalReactionWidget::ChemicalReactionWidget(QWidget  *parent, Qt::WindowFlags f)
     : QWidget{parent, f}
 {

@@ -8,7 +8,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
@@ -58,6 +58,7 @@ set(RDKit_LIBS
     RDKit::MolDraw2DQt
     RDKit::GraphMol
     RDKit::ChemReactions
+    RDKit::MolStandardize
 )
 
 set( LIBS
@@ -73,6 +74,8 @@ set(PROJECT_SOURCES
     reaction.cpp
     molecule.cpp
     chemicalitem.cpp
+    reactiondialog.cpp
+    reactiongenerator.cpp
 )
 
 set(PROJECT_HEADERS
@@ -80,11 +83,14 @@ set(PROJECT_HEADERS
     reaction.h
     molecule.h
     chemicalitem.h
+    reactiondialog.h
+    reactiongenerator.h
 )
 
 set(PROJECT_FORMS
     mainwindow.ui
     chemicalitem.ui
+    reactiondialog.ui
 )
 
 set(PROJECT_RESOURCES
@@ -141,3 +147,5 @@ set_target_properties(dimer_generator PROPERTIES
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(dimer_generator)
 endif()
+
+install()

@@ -43,7 +43,7 @@
       </property>
       <widget class="QWidget" name="input_tab">
        <attribute name="title">
-        <string>Input Molecules</string>
+        <string>Molecules</string>
        </attribute>
        <attribute name="whatsThis">
         <string>Where the initial molecules live</string>
@@ -145,7 +145,7 @@
         <enum>Qt::LeftToRight</enum>
        </property>
        <attribute name="title">
-        <string>Output</string>
+        <string>Result</string>
        </attribute>
        <attribute name="whatsThis">
         <string>The output of the program</string>
@@ -222,25 +222,7 @@
     <addaction name="actionSave"/>
     <addaction name="actionExit"/>
    </widget>
-   <widget class="QMenu" name="menuReactions">
-    <property name="title">
-     <string>Edit</string>
-    </property>
-    <widget class="QMenu" name="menuAdd_Molecule">
-     <property name="title">
-      <string>Add Molecule</string>
-     </property>
-    </widget>
-    <addaction name="actionAdd_Reaction"/>
-    <addaction name="separator"/>
-    <addaction name="menuAdd_Molecule"/>
-    <addaction name="separator"/>
-    <addaction name="actionSelect_All"/>
-    <addaction name="actionDeselect_All"/>
-    <addaction name="separator"/>
-   </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuReactions"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="toolBar">
@@ -254,6 +236,7 @@
     <bool>false</bool>
    </attribute>
    <addaction name="actionOpen"/>
+   <addaction name="actionAdd_Reaction"/>
    <addaction name="actionSave"/>
    <addaction name="separator"/>
    <addaction name="actionRun"/>
@@ -261,10 +244,10 @@
   <action name="actionOpen">
    <property name="icon">
     <iconset resource="res/QtResources.qrc">
-     <normaloff>:/icons/resources/document-open.png</normaloff>:/icons/resources/document-open.png</iconset>
+     <normaloff>:/resources/molecule.png</normaloff>:/resources/molecule.png</iconset>
    </property>
    <property name="text">
-    <string>Open</string>
+    <string>Add Molecules</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
@@ -276,7 +259,7 @@
      <normaloff>:/icons/resources/document-save.png</normaloff>:/icons/resources/document-save.png</iconset>
    </property>
    <property name="text">
-    <string>Save</string>
+    <string>Save Molecules</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
@@ -302,10 +285,20 @@
    <property name="text">
     <string>Run</string>
    </property>
+   <property name="shortcut">
+    <string>Return</string>
+   </property>
   </action>
   <action name="actionAdd_Reaction">
+   <property name="icon">
+    <iconset resource="res/QtResources.qrc">
+     <normaloff>:/resources/reaction.png</normaloff>:/resources/reaction.png</iconset>
+   </property>
    <property name="text">
-    <string>Add Reaction</string>
+    <string>Add Bridges</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+O</string>
    </property>
   </action>
   <action name="actionDelete_Reaction">
